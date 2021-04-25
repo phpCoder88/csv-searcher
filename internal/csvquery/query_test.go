@@ -3,6 +3,8 @@ package csvquery
 import (
 	"testing"
 
+	"go.uber.org/zap/zaptest"
+
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 	"github.com/stretchr/testify/assert"
 )
@@ -84,10 +86,11 @@ func TestQuery(t *testing.T) {
 			},
 		},
 	}
+	logger := zaptest.NewLogger(t)
 
 	for _, tt := range tests {
 		t.Run(tt.query, func(t *testing.T) {
-			query := NewQuery(tt.query)
+			query := NewQuery(tt.query, logger)
 			err := query.Parse()
 
 			if err != nil {

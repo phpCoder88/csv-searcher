@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 
+	"go.uber.org/zap"
+
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 )
 
@@ -30,6 +32,7 @@ type Query struct {
 	Where       *structs.Tree
 	UsedColumns map[Column]int
 	cursor      int
+	logger      *zap.Logger
 }
 
 var (
@@ -37,8 +40,11 @@ var (
 	ErrIncorrectBracketPosition = errors.New("incorrect bracket positions in where statement")
 )
 
-func NewQuery(query string) *Query {
-	return &Query{query: strings.TrimSpace(query)}
+func NewQuery(query string, logger *zap.Logger) *Query {
+	return &Query{
+		query:  strings.TrimSpace(query),
+		logger: logger,
+	}
 }
 
 func (q *Query) Parse() error {
@@ -64,6 +70,7 @@ func (q *Query) Parse() error {
 
 func (q *Query) ParseSelectStatement() error {
 	if !strings.HasPrefix(strings.ToUpper(q.query[q.cursor:]), string(SelectKeyword)+" ") {
+		q.logger.Error("Not found SELECT statement")
 		return ErrIncorrectQuery
 	}
 	q.cursor += len(SelectKeyword) + 1
@@ -71,6 +78,7 @@ func (q *Query) ParseSelectStatement() error {
 
 	columns, err := q.parseSelectFromStatement()
 	if err != nil {
+		q.logger.Error("Incorrect select statement")
 		return err
 	}
 
@@ -88,6 +96,7 @@ func (q *Query) ParseSelectStatement() error {
 
 func (q *Query) ParseFromStatement() error {
 	if !strings.HasPrefix(strings.ToUpper(q.query[q.cursor:]), string(FromKeyword)+" ") {
+		q.logger.Error("Not found FROM statement")
 		return ErrIncorrectQuery
 	}
 	q.cursor += len(FromKeyword) + 1
@@ -95,6 +104,7 @@ func (q *Query) ParseFromStatement() error {
 
 	tables, err := q.parseSelectFromStatement()
 	if err != nil {
+		q.logger.Error("Incorrect FROM statement")
 		return err
 	}
 
@@ -108,12 +118,13 @@ func (q *Query) ParseFromStatement() error {
 
 func (q *Query) ParseWhereStatement() error {
 	if !strings.HasPrefix(strings.ToUpper(q.query[q.cursor:]), string(WhereKeyword)+" ") {
+		q.logger.Error("Not found WHERE statement")
 		return ErrIncorrectQuery
 	}
 	q.cursor += len(WhereKeyword) + 1
 	q.skipSpace()
 
-	parser := NewWhereParser(q.query[q.cursor:])
+	parser := NewWhereParser(q.query[q.cursor:], q.logger)
 	whereColumns, tree, err := parser.Parse()
 	if err != nil {
 		return err

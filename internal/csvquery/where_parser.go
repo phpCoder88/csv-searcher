@@ -6,6 +6,8 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"go.uber.org/zap"
+
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 )
 
@@ -17,14 +19,16 @@ type WhereParser struct {
 	tokenStack   WhereTokenStack
 	tokens       *InfixNotation
 	condMap      ConditionMap
+	logger       *zap.Logger
 }
 
-func NewWhereParser(where string) *WhereParser {
+func NewWhereParser(where string, logger *zap.Logger) *WhereParser {
 	return &WhereParser{
 		where:   where,
 		condMap: make(ConditionMap),
 		tokens:  NewInfixNotation(),
 		columns: map[Column]int{},
+		logger:  logger,
 	}
 }
 
@@ -67,10 +71,12 @@ func (p *WhereParser) processWhereStmt() error {
 	}
 
 	if p.bracketStack.IsNotEmpty() {
+		p.logger.Error(ErrIncorrectBracketPosition.Error())
 		return ErrIncorrectBracketPosition
 	}
 
 	if p.tokens.Size() == 0 {
+		p.logger.Error(ErrIncorrectQuery.Error())
 		return ErrIncorrectQuery
 	}
 
@@ -118,6 +124,7 @@ func (p *WhereParser) extractConditionColumn() (Column, error) {
 	}
 
 	if colEndPos == 0 {
+		p.logger.Error(ErrIncorrectQuery.Error())
 		return "", ErrIncorrectQuery
 	}
 
@@ -137,6 +144,7 @@ func (p *WhereParser) extractConditionOperator() (Operation, error) {
 	}
 
 	if op == "" {
+		p.logger.Error(ErrIncorrectQuery.Error())
 		return "", ErrIncorrectQuery
 	}
 	p.cursor += len(op)
@@ -174,6 +182,7 @@ func (p *WhereParser) extractStringConditionValue() (string, error) {
 	for strCursor < len(p.where) {
 		endStrPos = strings.Index(p.where[strCursor+1:], openStringChar)
 		if endStrPos == -1 {
+			p.logger.Error(ErrIncorrectQuery.Error())
 			return "", ErrIncorrectQuery
 		}
 
@@ -213,6 +222,7 @@ func (p *WhereParser) extractNumberConditionValue() (float64, error) {
 
 	value, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
+		p.logger.Error(ErrIncorrectQuery.Error())
 		return 0, ErrIncorrectQuery
 	}
 
@@ -222,11 +232,13 @@ func (p *WhereParser) extractNumberConditionValue() (float64, error) {
 func (p *WhereParser) findBinaryOperator() (string, error) {
 	opEndPos := strings.Index(p.where[p.cursor:], " ")
 	if opEndPos == -1 {
+		p.logger.Error(ErrIncorrectQuery.Error())
 		return "", ErrIncorrectQuery
 	}
 
 	op := strings.ToUpper(p.where[p.cursor : p.cursor+opEndPos])
 	if op != string(AndKeyword) && op != string(OrKeyword) {
+		p.logger.Error(ErrIncorrectQuery.Error())
 		return "", ErrIncorrectQuery
 	}
 
@@ -288,6 +300,7 @@ func (p *WhereParser) nextAfterBinaryOpToken(currentRune rune) error {
 
 func (p *WhereParser) processCloseBracket() error {
 	if !p.bracketStack.IsTopEqual("(") {
+		p.logger.Error(ErrIncorrectBracketPosition.Error())
 		return ErrIncorrectBracketPosition
 	}
 

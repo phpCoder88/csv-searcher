@@ -1,1 +1,4 @@
 .idea
+error.log
+access.log
+profile.out

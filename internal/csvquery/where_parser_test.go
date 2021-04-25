@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"go.uber.org/zap/zaptest"
+
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 
 	"github.com/stretchr/testify/assert"
@@ -86,9 +88,11 @@ func TestWhereParser(t *testing.T) {
 		},
 	}
 
+	logger := zaptest.NewLogger(t)
+
 	for _, tt := range tests {
 		t.Run(tt.where, func(t *testing.T) {
-			parser := NewWhereParser(tt.where)
+			parser := NewWhereParser(tt.where, logger)
 			columns, tree, err := parser.Parse()
 			fmt.Println(columns)
 
