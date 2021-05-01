@@ -3,4 +3,5 @@ repos:
       rev: master
       hooks:
         -   id: go-fmt
+        -   id: go-unit-tests
         -   id: golangci-lint
