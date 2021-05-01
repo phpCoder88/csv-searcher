@@ -2,6 +2,7 @@ package csvquery
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"go.uber.org/zap"
@@ -25,19 +26,33 @@ type Columns []Column
 type Table string
 type Tables []Table
 
+type QueryColumns []Column
+
+func (qc *QueryColumns) add(name Column) {
+	for _, item := range *qc {
+		if item == name {
+			return
+		}
+	}
+
+	*qc = append(*qc, name)
+}
+
 type Query struct {
 	query       string
 	Select      Columns
+	StarColumn  bool
 	From        Tables
 	Where       *structs.Tree
-	UsedColumns map[Column]int
+	UsedColumns QueryColumns
 	cursor      int
 	logger      *zap.Logger
 }
 
 var (
 	ErrIncorrectQuery           = errors.New("incorrect query")
-	ErrIncorrectBracketPosition = errors.New("incorrect bracket positions in where statement")
+	ErrIncorrectBracketPosition = fmt.Errorf("%w: incorrect bracket positions in where statement", ErrIncorrectQuery)
+	ErrTooManyStarColumns       = fmt.Errorf("%w: too many star columns", ErrIncorrectQuery)
 )
 
 func NewQuery(query string, logger *zap.Logger) *Query {
@@ -83,12 +98,21 @@ func (q *Query) ParseSelectStatement() error {
 	}
 
 	q.Select = make(Columns, len(columns))
-	q.UsedColumns = make(map[Column]int)
+
+	var countStarColumns int
 	for i, column := range columns {
 		q.Select[i] = Column(column)
 		if column != "*" {
-			q.UsedColumns[Column(column)] = 0
+			q.UsedColumns.add(Column(column))
+			continue
 		}
+
+		countStarColumns++
+		q.StarColumn = true
+	}
+
+	if countStarColumns > 1 {
+		return ErrTooManyStarColumns
 	}
 
 	return nil
@@ -208,7 +232,7 @@ func (q *Query) parseSelectFromStatement() ([]string, error) {
 
 func (q *Query) mergeColumns(whereColumns map[Column]int) {
 	for column := range whereColumns {
-		q.UsedColumns[column] = 0
+		q.UsedColumns.add(column)
 	}
 }
 

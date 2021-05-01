@@ -134,11 +134,11 @@ func (p *WhereParser) extractConditionColumn() (Column, error) {
 	return Column(column), nil
 }
 
-func (p *WhereParser) extractConditionOperator() (Operation, error) {
+func (p *WhereParser) extractConditionOperator() (ComparisonOperator, error) {
 	var op string
-	for _, opItem := range Operations {
+	for _, opItem := range ComparisonOperators {
 		posOp := p.where[p.cursor : p.cursor+len(opItem)]
-		if strings.EqualFold(posOp, opItem) && len(op) < len(posOp) {
+		if strings.EqualFold(posOp, string(opItem)) && len(op) < len(posOp) {
 			op = posOp
 		}
 	}
@@ -149,7 +149,7 @@ func (p *WhereParser) extractConditionOperator() (Operation, error) {
 	}
 	p.cursor += len(op)
 
-	return Operation(op), nil
+	return ComparisonOperator(op), nil
 }
 
 func (p *WhereParser) extractConditionValue() (value interface{}, valueType ValueType, err error) {

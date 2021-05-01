@@ -78,9 +78,14 @@ func (app *App) Run() {
 			break
 		}
 
+		if input == "" {
+			continue
+		}
+
 		err = db.Execute(ctx, input, app.conf, app.logger)
 		if err != nil {
 			app.logger.Error(err.Error())
+			_, _ = fmt.Fprintln(os.Stderr, "ERROR:", err)
 		}
 	}
 }

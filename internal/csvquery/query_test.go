@@ -14,8 +14,56 @@ func TestQuery(t *testing.T) {
 
 	tests := []struct {
 		query      string
-		wantError  error
 		wantResult *Query
+	}{
+		{
+			query: "select * from users",
+			wantResult: &Query{
+				query:       "select * from users",
+				Select:      Columns{"*"},
+				From:        Tables{"users"},
+				Where:       nil,
+				UsedColumns: nil,
+				cursor:      19,
+			},
+		},
+		{
+			query: "select name,age from users where age = 33",
+			wantResult: &Query{
+				query:       "select name,age from users where age = 33",
+				Select:      Columns{"name", "age"},
+				From:        Tables{"users"},
+				Where:       structs.NewTree(cond1, nil, nil),
+				UsedColumns: QueryColumns{"name", "age"},
+				cursor:      33,
+			},
+		},
+	}
+	logger := zaptest.NewLogger(t)
+
+	for _, tt := range tests {
+		t.Run(tt.query, func(t *testing.T) {
+			query := NewQuery(tt.query, logger)
+			err := query.Parse()
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantResult.query, query.query)
+			assert.Equal(t, tt.wantResult.Select, query.Select)
+			assert.Equal(t, tt.wantResult.From, query.From)
+			assert.Equal(t, tt.wantResult.cursor, query.cursor)
+			assert.Equal(t, tt.wantResult.UsedColumns, query.UsedColumns)
+
+			assert.Condition(t, func() bool {
+				return sameTree(tt.wantResult.Where, query.Where)
+			})
+		})
+	}
+}
+
+func TestQuery_Errors(t *testing.T) {
+	tests := []struct {
+		query     string
+		wantError error
 	}{
 		{
 			query:     "select",
@@ -62,28 +110,8 @@ func TestQuery(t *testing.T) {
 			wantError: ErrIncorrectQuery,
 		},
 		{
-			query:     "select * from users",
-			wantError: nil,
-			wantResult: &Query{
-				query:       "select * from users",
-				Select:      Columns{"*"},
-				From:        Tables{"users"},
-				Where:       nil,
-				UsedColumns: map[Column]int{},
-				cursor:      19,
-			},
-		},
-		{
-			query:     "select name,age from users where age = 33",
-			wantError: nil,
-			wantResult: &Query{
-				query:       "select name,age from users where age = 33",
-				Select:      Columns{"name", "age"},
-				From:        Tables{"users"},
-				Where:       structs.NewTree(cond1, nil, nil),
-				UsedColumns: map[Column]int{"name": 0, "age": 0},
-				cursor:      33,
-			},
+			query:     "select *, age, * from users",
+			wantError: ErrTooManyStarColumns,
 		},
 	}
 	logger := zaptest.NewLogger(t)
@@ -93,20 +121,7 @@ func TestQuery(t *testing.T) {
 			query := NewQuery(tt.query, logger)
 			err := query.Parse()
 
-			if err != nil {
-				assert.Equal(t, tt.wantError, err)
-				return
-			}
-
-			assert.Equal(t, tt.wantResult.query, query.query)
-			assert.Equal(t, tt.wantResult.Select, query.Select)
-			assert.Equal(t, tt.wantResult.From, query.From)
-			assert.Equal(t, tt.wantResult.cursor, query.cursor)
-			assert.Equal(t, tt.wantResult.UsedColumns, query.UsedColumns)
-
-			assert.Condition(t, func() bool {
-				return sameTree(tt.wantResult.Where, query.Where)
-			})
+			assert.Equal(t, tt.wantError, err)
 		})
 	}
 }

@@ -20,3 +20,22 @@ func TestGetPriority(t *testing.T) {
 	assert.Less(t, GetPriority(OrOperator), GetPriority(AndOperator))
 	assert.Equal(t, -1, GetPriority("COND"))
 }
+
+func TestIsSameOperator(t *testing.T) {
+	assert.True(t, IsSameOperator("AND", AndOperator))
+	assert.True(t, IsSameOperator("OR", OrOperator))
+	assert.False(t, IsSameOperator("IN", OrOperator))
+	assert.False(t, IsSameOperator("LIKE", AndOperator))
+}
+
+func TestCalc(t *testing.T) {
+	assert.True(t, Calc(true, true, AndOperator))
+	assert.False(t, Calc(true, false, AndOperator))
+	assert.False(t, Calc(false, true, AndOperator))
+	assert.False(t, Calc(false, false, AndOperator))
+
+	assert.True(t, Calc(true, true, OrOperator))
+	assert.True(t, Calc(true, false, OrOperator))
+	assert.True(t, Calc(false, true, OrOperator))
+	assert.False(t, Calc(false, false, OrOperator))
+}
