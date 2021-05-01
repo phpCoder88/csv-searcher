@@ -268,7 +268,9 @@ func (db *DB) connectTable(table csvquery.Table) (*csv.Reader, error) {
 	db.connections[table] = file
 	db.Unlock()
 
-	return csv.NewReader(file), nil
+	reader := csv.NewReader(file)
+	reader.Comma = db.config.FieldDelimiter
+	return reader, nil
 }
 
 func (db *DB) checkTableColumns(table csvquery.Table, tableColumns []string) error {
