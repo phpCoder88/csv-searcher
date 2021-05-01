@@ -34,7 +34,7 @@ var (
 	ErrIncorrectColumnCount = errors.New("incorrect column count")
 )
 
-func Execute(ctx context.Context, queryString string, conf *config.Config, logger *zap.Logger) error {
+func Execute(ctx context.Context, connector TableConnector, queryString string, conf *config.Config, logger *zap.Logger) error {
 	logger.Info(fmt.Sprintf("Executing query: '%s'", queryString))
 	logger = logger.With(zap.String("query", queryString))
 
@@ -42,7 +42,7 @@ func Execute(ctx context.Context, queryString string, conf *config.Config, logge
 	defer cancel()
 
 	query := csvquery.NewQuery(queryString, logger)
-	db := NewDB(query, logger, conf)
+	db := NewDB(connector, query, logger, conf)
 
 	go db.execute(timeoutCtx)
 
@@ -88,12 +88,13 @@ done:
 }
 
 type DB struct {
-	query  *csvquery.Query
-	logger *zap.Logger
-	config *config.Config
+	connector TableConnector
+	query     *csvquery.Query
+	logger    *zap.Logger
+	config    *config.Config
 
 	sync.Mutex
-	connections map[csvquery.Table]*os.File
+	connections map[csvquery.Table]io.ReadCloser
 
 	mapLock          sync.RWMutex
 	mapTable2Columns map[csvquery.Table]map[csvquery.Column]int
@@ -105,14 +106,15 @@ type DB struct {
 	headersCh  chan []string
 }
 
-func NewDB(query *csvquery.Query, logger *zap.Logger, conf *config.Config) *DB {
+func NewDB(connector TableConnector, query *csvquery.Query, logger *zap.Logger, conf *config.Config) *DB {
 	return &DB{
+		connector:   connector,
 		query:       query,
 		finishedCh:  make(chan struct{}),
 		errorCh:     make(chan error),
 		logger:      logger,
 		config:      conf,
-		connections: make(map[csvquery.Table]*os.File),
+		connections: make(map[csvquery.Table]io.ReadCloser),
 		resultCh:    make(chan []string, conf.Limit),
 		headersCh:   make(chan []string),
 	}
@@ -207,12 +209,7 @@ func (db *DB) executeQuery(ctx context.Context) {
 
 func (db *DB) tableExist(table csvquery.Table) bool {
 	tablePath := path.Join(db.config.TableLocation, string(table))
-
-	if _, err := os.Stat(tablePath); os.IsNotExist(err) {
-		return false
-	}
-
-	return true
+	return db.connector.Exists(tablePath)
 }
 
 func (db *DB) executeOnTable(ctx context.Context, table csvquery.Table, wg *sync.WaitGroup) {
@@ -258,7 +255,7 @@ func (db *DB) executeOnTable(ctx context.Context, table csvquery.Table, wg *sync
 
 func (db *DB) connectTable(table csvquery.Table) (*csv.Reader, error) {
 	tablePath := path.Join(db.config.TableLocation, string(table))
-	file, err := os.Open(tablePath)
+	file, err := db.connector.GetReader(tablePath)
 	if err != nil {
 		err := fmt.Errorf("%w: %s", ErrTableConnection, table)
 		return nil, err

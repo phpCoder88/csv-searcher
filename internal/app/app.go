@@ -69,6 +69,7 @@ func (app *App) Run() {
 		if err != nil {
 			if err == io.EOF {
 				app.logger.Error("End of line")
+				fmt.Println("")
 			}
 			break
 		}
@@ -82,7 +83,7 @@ func (app *App) Run() {
 			continue
 		}
 
-		err = db.Execute(ctx, input, app.conf, app.logger)
+		err = db.Execute(ctx, db.FileTableConnector{}, input, app.conf, app.logger)
 		if err != nil {
 			app.logger.Error(err.Error())
 			_, _ = fmt.Fprintln(os.Stderr, "ERROR:", err)
