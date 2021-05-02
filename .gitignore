@@ -2,3 +2,6 @@
 error.log
 access.log
 profile.out
+
+# Build artifacts
+/build

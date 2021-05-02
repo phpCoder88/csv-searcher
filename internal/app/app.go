@@ -9,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/phpCoder88/csv-searcher/internal/version"
+
 	"github.com/phpCoder88/csv-searcher/internal/db"
 	"github.com/phpCoder88/csv-searcher/internal/sqlreader"
 
@@ -58,6 +60,9 @@ func (app *App) Run() {
 	}
 
 	fmt.Println("Welcome to the CsvDB monitor.")
+	fmt.Println("App Version is", version.Version)
+	fmt.Println("Build Date is", version.BuildDate)
+	fmt.Println("Build Commit is", version.BuildCommit)
 	fmt.Printf("Your location is %s\n\n", appDir)
 	fmt.Printf("Copyright (c) 2021 Bobylev Pavel\n\n")
 
