@@ -14,29 +14,33 @@ GO_BUILD_ARGS = \
     -X '$(REPO)/internal/version.BuildDate=$(BUILD_DATE)' \
   " \
 
-
-
+.PHONY: build
 build:
 	@echo "+ $@"
 	@mkdir -p $(BUILD_DIR)
 	go build -race $(GO_BUILD_ARGS) -o $(BUILD_DIR) ./cmd/sqlcli
 
+.PHONY: test
 test:
 	@echo "+ $@"
 	go test -cover ./...
 
+.PHONY: test-cover
 test-cover:
 	@echo "+ $@"
 	go test -coverprofile=profile.out ./...
 	go tool cover -html=profile.out
 	rm profile.out
 
+.PHONY: check
 check:
 	golangci-lint run
 
+.PHONY: run
 run: clean build
 	@echo "+ $@"
 	./${BUILD_DIR}/${APP}
 
+.PHONY: clean
 clean:
 	@rm -rf $(BUILD_DIR)
