@@ -68,7 +68,8 @@ func (app *App) Run() {
 	fmt.Println("Build Date is", version.BuildDate)
 	fmt.Println("Build Commit is", version.BuildCommit)
 	fmt.Printf("Your location is %s\n\n", appDir)
-	fmt.Printf("Copyright (c) 2021 Bobylev Pavel\n\n")
+	fmt.Printf("Copyright (c) 2021 Bobylev Pavel.\n\n")
+	fmt.Printf("Type 'exit' to quit.\n\n")
 
 	reader := sqlreader.NewSQLReader(os.Stdin)
 	for {
@@ -78,12 +79,13 @@ func (app *App) Run() {
 		if err != nil {
 			if err == io.EOF {
 				app.logger.Error("End of line")
-				fmt.Println("")
+				fmt.Printf("\nBye\n")
 			}
 			break
 		}
 
 		if strings.EqualFold("exit", input) {
+			fmt.Println("Bye")
 			app.logger.Info("Exiting...")
 			break
 		}
@@ -107,6 +109,7 @@ func (app *App) waitSignal(cancel context.CancelFunc) {
 	signal.Notify(osSignalChan, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 
 	sig := <-osSignalChan
+	fmt.Printf("\nAborted\n")
 	app.logger.Error(fmt.Sprintf("got signal %q", sig.String()))
 	cancel()
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"text/tabwriter"
 	"time"
@@ -83,6 +84,8 @@ done:
 		}
 	}
 
+	db.execTime = time.Since(db.start)
+
 	close(db.resultCh)
 	close(db.headersCh)
 	close(db.finishedCh)
@@ -102,6 +105,8 @@ type DB struct {
 	finishedCh chan struct{}
 	resultCh   chan []string
 	headersCh  chan []string
+	start      time.Time
+	execTime   time.Duration
 }
 
 // NewDB returns new instance of DB.
@@ -115,6 +120,7 @@ func NewDB(connector TableConnector, query *csvquery.Query, logger *zap.Logger, 
 		config:     conf,
 		resultCh:   make(chan []string, conf.Limit),
 		headersCh:  make(chan []string),
+		start:      time.Now(),
 	}
 }
 
@@ -173,6 +179,12 @@ func (db *DB) checkTableColumnNames(currentHeaders, headers []string) error {
 }
 
 func (db *DB) printResult(rows [][]string) error {
+	rowCount := len(rows) - 1
+	if rowCount == 0 {
+		fmt.Printf("Empty set (%.3f sec)\n\n", db.execTime.Seconds())
+		return nil
+	}
+
 	var err error
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.AlignRight|tabwriter.Debug)
 
@@ -201,5 +213,7 @@ loop:
 		return err
 	}
 
+	fmt.Printf("%s\n", strings.Repeat("-", 30))
+	fmt.Printf("%d rows in set (%.3f sec)\n\n", rowCount, db.execTime.Seconds())
 	return nil
 }
