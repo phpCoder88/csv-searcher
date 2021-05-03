@@ -3,7 +3,7 @@ BUILD_DIR = build
 REPO = $(shell go list -m)
 BUILD_DATE = $(shell date +%FT%T%Z)
 BUILD_COMMIT = $(shell git rev-parse HEAD)
-VERSION = $(if $(TAG),$(TAG),$(if $(BRANCH_NAME),$(BRANCH_NAME),$(shell git symbolic-ref -q --short HEAD || git describe --tags --exact-match)))
+VERSION = $(if $(TAG),$(TAG),$(if $(BRANCH_NAME),$(BRANCH_NAME),$(shell git describe --tags --exact-match || git symbolic-ref -q --short HEAD)))
 
 GO_ASMFLAGS = -asmflags "all=-trimpath=$(shell dirname $(PWD))"
 GO_GCFLAGS = -gcflags "all=-trimpath=$(shell dirname $(PWD))"
