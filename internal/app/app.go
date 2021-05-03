@@ -1,3 +1,4 @@
+// Package app initializes and runs app.
 package app
 
 import (
@@ -20,11 +21,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// A App describes app.
 type App struct {
 	conf   *config.Config
 	logger *zap.Logger
 }
 
+// NewApp creates new app instance.
 func NewApp() *App {
 	logger := createLogger()
 
@@ -40,6 +43,7 @@ func NewApp() *App {
 	}
 }
 
+// Run runs the app.
 func (app *App) Run() {
 	defer func(logger *zap.Logger) {
 		err := logger.Sync()
@@ -96,6 +100,7 @@ func (app *App) Run() {
 	}
 }
 
+// waitSignal handles SIGINT and SIGTERM signals.
 func (app *App) waitSignal(cancel context.CancelFunc) {
 	osSignalChan := make(chan os.Signal, 1)
 	defer signal.Stop(osSignalChan)
@@ -106,6 +111,7 @@ func (app *App) waitSignal(cancel context.CancelFunc) {
 	cancel()
 }
 
+// createLogger configures zap logger.
 func createLogger() *zap.Logger {
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		return lvl >= zapcore.ErrorLevel

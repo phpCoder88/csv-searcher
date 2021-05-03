@@ -1,3 +1,4 @@
+// Package csvquery parse and analyzes sql like query string.
 package csvquery
 
 import (
@@ -10,24 +11,38 @@ import (
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 )
 
+// keyword describes sql keyword type.
 type keyword string
 
 const (
+	// SelectKeyword returns SELECT keyword.
 	SelectKeyword keyword = "SELECT"
-	FromKeyword   keyword = "FROM"
-	WhereKeyword  keyword = "WHERE"
-	AndKeyword    keyword = "AND"
-	OrKeyword     keyword = "OR"
+	// FromKeyword returns FROM keyword.
+	FromKeyword keyword = "FROM"
+	// WhereKeyword returns WHERE keyword.
+	WhereKeyword keyword = "WHERE"
+	// AndKeyword returns AND keyword.
+	AndKeyword keyword = "AND"
+	// OrKeyword returns OR keyword.
+	OrKeyword keyword = "OR"
 )
 
+// Column describes table column.
 type Column string
+
+// Columns describes list of table columns.
 type Columns []Column
 
+// Table describes table.
 type Table string
+
+// Tables describes list of tables.
 type Tables []Table
 
+// QueryColumns describes list of unique table columns.
 type QueryColumns []Column
 
+// add adds unique column to the list.
 func (qc *QueryColumns) add(name Column) {
 	for _, item := range *qc {
 		if item == name {
@@ -38,6 +53,7 @@ func (qc *QueryColumns) add(name Column) {
 	*qc = append(*qc, name)
 }
 
+// A Query describes a query string.
 type Query struct {
 	query       string
 	Select      Columns
@@ -50,11 +66,15 @@ type Query struct {
 }
 
 var (
-	ErrIncorrectQuery           = errors.New("incorrect query")
+	// ErrIncorrectQuery return error if query string is incorrect.
+	ErrIncorrectQuery = errors.New("incorrect query")
+	// ErrIncorrectBracketPosition return error if query string has incorrect bracket positions in where statement.
 	ErrIncorrectBracketPosition = fmt.Errorf("%w: incorrect bracket positions in where statement", ErrIncorrectQuery)
-	ErrTooManyStarColumns       = fmt.Errorf("%w: too many star columns", ErrIncorrectQuery)
+	// ErrTooManyStarColumns returns error if query string has more than one star in select statement.
+	ErrTooManyStarColumns = fmt.Errorf("%w: too many star columns", ErrIncorrectQuery)
 )
 
+// NewQuery returns the query.
 func NewQuery(query string, logger *zap.Logger) *Query {
 	return &Query{
 		query:  strings.TrimSpace(query),
@@ -62,6 +82,7 @@ func NewQuery(query string, logger *zap.Logger) *Query {
 	}
 }
 
+// Parse parses the sql like query string.
 func (q *Query) Parse() error {
 	err := q.ParseSelectStatement()
 	if err != nil {
@@ -83,6 +104,7 @@ func (q *Query) Parse() error {
 	return nil
 }
 
+// ParseSelectStatement parses select statement.
 func (q *Query) ParseSelectStatement() error {
 	if !strings.HasPrefix(strings.ToUpper(q.query[q.cursor:]), string(SelectKeyword)+" ") {
 		q.logger.Error("Not found SELECT statement")
@@ -118,6 +140,7 @@ func (q *Query) ParseSelectStatement() error {
 	return nil
 }
 
+// ParseFromStatement parses from statement.
 func (q *Query) ParseFromStatement() error {
 	if !strings.HasPrefix(strings.ToUpper(q.query[q.cursor:]), string(FromKeyword)+" ") {
 		q.logger.Error("Not found FROM statement")
@@ -140,6 +163,7 @@ func (q *Query) ParseFromStatement() error {
 	return nil
 }
 
+// ParseWhereStatement parses where statement.
 func (q *Query) ParseWhereStatement() error {
 	if !strings.HasPrefix(strings.ToUpper(q.query[q.cursor:]), string(WhereKeyword)+" ") {
 		q.logger.Error("Not found WHERE statement")

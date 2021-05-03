@@ -16,17 +16,27 @@ import (
 )
 
 var (
-	ErrQueryTimeout         = errors.New("time for executing query is out")
-	ErrNotExistColumn       = errors.New("column doesn't exist")
-	ErrTableConnection      = errors.New("can't connect table")
-	ErrTableDisconnection   = errors.New("can't disconnect table")
-	ErrTableColumnsRead     = errors.New("can't read table columns")
-	ErrIncorrectTableRow    = errors.New("incorrect table row")
-	ErrIncorrectWhereTree   = errors.New("incorrect where tree")
+	// ErrQueryTimeout indicates that time for executing query is out.
+	ErrQueryTimeout = errors.New("time for executing query is out")
+	// ErrNotExistColumn indicates that given column doesn't exist.
+	ErrNotExistColumn = errors.New("column doesn't exist")
+	// ErrTableConnection indicates that executor can't connect to the given table.
+	ErrTableConnection = errors.New("can't connect table")
+	// ErrTableDisconnection indicates that executor can't disconnect the table.
+	ErrTableDisconnection = errors.New("can't disconnect table")
+	// ErrTableColumnsRead indicates that executor can't read the table columns.
+	ErrTableColumnsRead = errors.New("can't read table columns")
+	// ErrIncorrectTableRow indicates that executor got incorrect table row.
+	ErrIncorrectTableRow = errors.New("incorrect table row")
+	// ErrIncorrectWhereTree indicates that executor got incorrect where tree.
+	ErrIncorrectWhereTree = errors.New("incorrect where tree")
+	// ErrIncorrectColumnOrder indicates that executor got incorrect column order in tables.
 	ErrIncorrectColumnOrder = errors.New("incorrect column order in tables")
+	// ErrIncorrectColumnCount indicates that executor got incorrect column count.
 	ErrIncorrectColumnCount = errors.New("incorrect column count")
 )
 
+// Execute executes query.
 func Execute(ctx context.Context, connector TableConnector, queryString string, conf *config.Config, logger *zap.Logger) error {
 	logger.Info(fmt.Sprintf("Executing query: '%s'", queryString))
 	logger = logger.With(zap.String("query", queryString))
@@ -80,6 +90,7 @@ done:
 	return db.printResult(rows)
 }
 
+// DB describes file database.
 type DB struct {
 	connector TableConnector
 	query     *csvquery.Query
@@ -93,6 +104,7 @@ type DB struct {
 	headersCh  chan []string
 }
 
+// NewDB returns new instance of DB.
 func NewDB(connector TableConnector, query *csvquery.Query, logger *zap.Logger, conf *config.Config) *DB {
 	return &DB{
 		connector:  connector,

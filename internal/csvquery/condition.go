@@ -8,21 +8,30 @@ import (
 	"strings"
 )
 
+// ValueType describes value type of condition value.
 type ValueType uint
 
 const (
+	// TypeNumber return condition number value type.
 	TypeNumber ValueType = iota
+	// TypeString return condition string value type.
 	TypeString
 )
 
 var (
-	ErrUnknownValueType          = errors.New("unknown value type of condition value")
+	// ErrUnknownValueType describes unknown value type of condition value error.
+	ErrUnknownValueType = errors.New("unknown value type of condition value")
+	// ErrUnknownComparisonOperator describes unknown comparison operator error.
 	ErrUnknownComparisonOperator = errors.New("unknown comparison operator")
-	ErrCastInterfaceToString     = errors.New("can't cast interface to string")
-	ErrCastInterfaceToFloat64    = errors.New("can't cast interface to float64")
-	ErrConvertToFloat64          = errors.New("can't convert float64")
+	// ErrCastInterfaceToString error if script can't cast interface to string.
+	ErrCastInterfaceToString = errors.New("can't cast interface to string")
+	// ErrCastInterfaceToFloat64 error if script can't cast interface to float64.
+	ErrCastInterfaceToFloat64 = errors.New("can't cast interface to float64")
+	// ErrConvertToFloat64 error if script can't convert float64.
+	ErrConvertToFloat64 = errors.New("can't convert float64")
 )
 
+// Condition describes one condition in where statement.
 type Condition struct {
 	Column    Column
 	Op        ComparisonOperator
@@ -30,10 +39,13 @@ type Condition struct {
 	Value     interface{}
 }
 
+// ConditionPrefix contains string condition prefix which is using in ConditionMap.
 const ConditionPrefix = "COND"
 
+// ConditionMap contains mapping strings conds to Condition structs.
 type ConditionMap map[string]*Condition
 
+// Add adds unique Condition to the map.
 func (cm *ConditionMap) Add(cond *Condition) string {
 	if condKey, found := cm.exists(cond); found {
 		return condKey
@@ -54,6 +66,7 @@ func (cm *ConditionMap) exists(cond *Condition) (string, bool) {
 	return "", false
 }
 
+// CheckCondition checks condition.
 func (c *Condition) CheckCondition(value string) (bool, error) {
 	if c.ValueType == TypeNumber {
 		return c.checkNumberCondition(value)
@@ -64,6 +77,7 @@ func (c *Condition) CheckCondition(value string) (bool, error) {
 	return false, fmt.Errorf("%w: column: %s, condition value: %s, value Type: %d", ErrUnknownValueType, c.Column, value, c.ValueType)
 }
 
+// checkNumberCondition checks number condition.
 func (c *Condition) checkNumberCondition(value string) (bool, error) {
 	if strings.TrimSpace(value) == "" {
 		return false, nil
@@ -105,6 +119,7 @@ func (c *Condition) checkNumberCondition(value string) (bool, error) {
 	return false, fmt.Errorf("%w: column: %s, operator: %s", ErrUnknownComparisonOperator, c.Column, c.Op)
 }
 
+// checkStringCondition checks string condition.
 func (c *Condition) checkStringCondition(value string) (bool, error) {
 	condValue, ok := c.Value.(string)
 	if !ok {

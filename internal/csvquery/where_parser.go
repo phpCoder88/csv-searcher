@@ -11,6 +11,7 @@ import (
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 )
 
+// WhereParser contains where statement parser data.
 type WhereParser struct {
 	where        string
 	cursor       int
@@ -22,6 +23,7 @@ type WhereParser struct {
 	logger       *zap.Logger
 }
 
+// NewWhereParser returns new where statement parser.
 func NewWhereParser(where string, logger *zap.Logger) *WhereParser {
 	return &WhereParser{
 		where:   where,
@@ -32,6 +34,7 @@ func NewWhereParser(where string, logger *zap.Logger) *WhereParser {
 	}
 }
 
+// Parse parses the where statement.
 func (p *WhereParser) Parse() (map[Column]int, *structs.Tree, error) {
 	err := p.processWhereStmt()
 	if err != nil {

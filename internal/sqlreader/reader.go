@@ -1,3 +1,4 @@
+// Package sqlreader reads lines with with the ability to cancel the context.
 package sqlreader
 
 import (
@@ -8,14 +9,15 @@ import (
 	"strings"
 )
 
+// Reader describes reader
 type Reader struct {
 	bufioReader *bufio.Reader
 }
 
-var (
-	ErrInterrupted = errors.New("context canceled")
-)
+// ErrInterrupted error for canceled context.
+var ErrInterrupted = errors.New("context canceled")
 
+// NewSQLReader returns a new Reader
 func NewSQLReader(rd io.Reader) *Reader {
 	reader := bufio.NewReader(rd)
 	return &Reader{
@@ -23,6 +25,7 @@ func NewSQLReader(rd io.Reader) *Reader {
 	}
 }
 
+// ReadLine returns the read string or error.
 func (r *Reader) ReadLine(ctx context.Context) (string, error) {
 	var resultStr string
 	var resultErr error

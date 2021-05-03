@@ -14,6 +14,7 @@ import (
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 )
 
+// Table describes table entity.
 type Table struct {
 	name       csvquery.Table
 	query      *csvquery.Query
@@ -23,6 +24,7 @@ type Table struct {
 	db *DB
 }
 
+// NewTable returns new instance of Table.
 func NewTable(
 	name csvquery.Table,
 	query *csvquery.Query,
@@ -36,6 +38,7 @@ func NewTable(
 	}
 }
 
+// Exists checks whether a table exists.
 func (t *Table) Exists() bool {
 	tablePath := path.Join(t.db.config.TableLocation, string(t.name))
 	return t.db.connector.Exists(tablePath)

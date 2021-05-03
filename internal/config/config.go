@@ -1,3 +1,4 @@
+// Package config gets configuration data from .env file or env variables.
 package config
 
 import (
@@ -10,6 +11,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
+// Config describes configuration data.
 type Config struct {
 	Timeout        time.Duration `default:"500ms"`
 	Workers        int           `default:"50"`
@@ -19,8 +21,10 @@ type Config struct {
 	FieldDelimiter rune
 }
 
+// ErrIncorrectDelimiter is error for incorrect delimiter.
 var ErrIncorrectDelimiter = errors.New("incorrect delimiter. there must be only one rune in string")
 
+// GetConfig returns configuration data from .env file or env variables.
 func GetConfig() (*Config, error) {
 	var err error
 

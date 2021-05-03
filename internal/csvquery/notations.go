@@ -6,12 +6,14 @@ import (
 	"github.com/phpCoder88/csv-searcher/internal/structs"
 )
 
+// InfixNotation describes list of tokens in infix notation.
 type InfixNotation struct {
 	tokens []string
 	stack  *structs.StringStack
 	queue  *structs.StringQueue
 }
 
+// NewInfixNotation return new infix notation instance.
 func NewInfixNotation() *InfixNotation {
 	return &InfixNotation{
 		stack: new(structs.StringStack),
@@ -19,10 +21,12 @@ func NewInfixNotation() *InfixNotation {
 	}
 }
 
+// AddToken adds new token.
 func (n *InfixNotation) AddToken(token string) {
 	n.tokens = append(n.tokens, token)
 }
 
+// Size returns count of tokens.
 func (n *InfixNotation) Size() int {
 	return len(n.tokens)
 }
@@ -31,6 +35,7 @@ func (n *InfixNotation) isValue(val string) bool {
 	return strings.HasPrefix(val, ConditionPrefix)
 }
 
+// ToPostfix returns list of tokens in postfix notation.
 func (n *InfixNotation) ToPostfix() []string {
 	for _, val := range n.tokens {
 		if n.isValue(val) {
