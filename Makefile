@@ -5,8 +5,6 @@ BUILD_DATE = $(shell date +%FT%T%Z)
 BUILD_COMMIT = $(shell git rev-parse HEAD)
 VERSION = $(if $(TAG),$(TAG),$(if $(BRANCH_NAME),$(BRANCH_NAME),$(shell git describe --tags --exact-match || git symbolic-ref -q --short HEAD)))
 
-GO_ASMFLAGS = -asmflags "all=-trimpath=$(shell dirname $(PWD))"
-GO_GCFLAGS = -gcflags "all=-trimpath=$(shell dirname $(PWD))"
 GO_BUILD_ARGS = \
   -ldflags " \
     -X '$(REPO)/internal/version.Version=$(VERSION)' \
