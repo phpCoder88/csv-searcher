@@ -44,9 +44,7 @@ func (t *Table) Exists() bool {
 	return t.db.connector.Exists(tablePath)
 }
 
-func (t *Table) executeOnTable(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (t *Table) executeOnTable(ctx context.Context) {
 	reader, err := t.connect()
 	if err != nil {
 		t.db.logger.Error(err.Error())
@@ -127,7 +125,10 @@ func (t *Table) getRows(ctx context.Context, reader *csv.Reader) {
 	var wg sync.WaitGroup
 	wg.Add(t.db.config.Workers)
 	for i := 0; i < t.db.config.Workers; i++ {
-		go t.processRow(workerInput, &wg)
+		go func() {
+			t.processRow(workerInput)
+			wg.Done()
+		}()
 	}
 
 reader:
@@ -154,9 +155,7 @@ reader:
 	wg.Wait()
 }
 
-func (t *Table) processRow(in <-chan []string, wg *sync.WaitGroup) {
-	defer wg.Done()
-
+func (t *Table) processRow(in <-chan []string) {
 	for input := range in {
 		rowOk, err := t.checkRow(&input)
 		if err != nil {

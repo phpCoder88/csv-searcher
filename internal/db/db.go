@@ -152,7 +152,10 @@ func (db *DB) executeQuery(ctx context.Context) {
 		}
 
 		wg.Add(1)
-		go table.executeOnTable(ctx, &wg)
+		go func() {
+			table.executeOnTable(ctx)
+			wg.Done()
+		}()
 	}
 
 	wg.Wait()
