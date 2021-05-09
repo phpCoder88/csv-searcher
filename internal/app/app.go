@@ -106,7 +106,7 @@ func (app *App) Run() {
 func (app *App) waitSignal(cancel context.CancelFunc) {
 	osSignalChan := make(chan os.Signal, 1)
 	defer signal.Stop(osSignalChan)
-	signal.Notify(osSignalChan, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	signal.Notify(osSignalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	sig := <-osSignalChan
 	fmt.Printf("\nAborted\n")
