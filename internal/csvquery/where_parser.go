@@ -1,6 +1,7 @@
 package csvquery
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -79,7 +80,8 @@ func (p *WhereParser) processWhereStmt() error {
 	}
 
 	if p.tokens.Size() == 0 {
-		p.logger.Error(ErrIncorrectQuery.Error())
+		err := fmt.Errorf("%w: there is no condition tokens at where statement", ErrIncorrectQuery)
+		p.logger.Error(err.Error())
 		return ErrIncorrectQuery
 	}
 
@@ -127,7 +129,8 @@ func (p *WhereParser) extractConditionColumn() (Column, error) {
 	}
 
 	if colEndPos == 0 {
-		p.logger.Error(ErrIncorrectQuery.Error())
+		err := fmt.Errorf("%w: cant't find a condition column at where statement at %d position", ErrIncorrectQuery, p.cursor)
+		p.logger.Error(err.Error())
 		return "", ErrIncorrectQuery
 	}
 
@@ -147,7 +150,8 @@ func (p *WhereParser) extractConditionOperator() (ComparisonOperator, error) {
 	}
 
 	if op == "" {
-		p.logger.Error(ErrIncorrectQuery.Error())
+		err := fmt.Errorf("%w: cant't find a condition operator at where statement at %d position", ErrIncorrectQuery, p.cursor)
+		p.logger.Error(err.Error())
 		return "", ErrIncorrectQuery
 	}
 	p.cursor += len(op)
@@ -185,7 +189,9 @@ func (p *WhereParser) extractStringConditionValue() (string, error) {
 	for strCursor < len(p.where) {
 		endStrPos = strings.Index(p.where[strCursor+1:], openStringChar)
 		if endStrPos == -1 {
-			p.logger.Error(ErrIncorrectQuery.Error())
+			err := fmt.Errorf("%w: cant't find the end of the string condition value "+
+				"at where statement starting from %d position", ErrIncorrectQuery, p.cursor)
+			p.logger.Error(err.Error())
 			return "", ErrIncorrectQuery
 		}
 
@@ -225,7 +231,10 @@ func (p *WhereParser) extractNumberConditionValue() (float64, error) {
 
 	value, err := strconv.ParseFloat(valueStr, 64)
 	if err != nil {
-		p.logger.Error(ErrIncorrectQuery.Error())
+		err := fmt.Errorf("%w: cant't parse number condition value "+
+			"or string condition value doesn't start with a quot/prime simbol "+
+			"at where statement starting from %d position", ErrIncorrectQuery, p.cursor)
+		p.logger.Error(err.Error())
 		return 0, ErrIncorrectQuery
 	}
 
@@ -235,13 +244,15 @@ func (p *WhereParser) extractNumberConditionValue() (float64, error) {
 func (p *WhereParser) findBinaryOperator() (string, error) {
 	opEndPos := strings.Index(p.where[p.cursor:], " ")
 	if opEndPos == -1 {
-		p.logger.Error(ErrIncorrectQuery.Error())
+		err := fmt.Errorf("%w: cant't find a binary operator at where statement starting from %d position", ErrIncorrectQuery, p.cursor)
+		p.logger.Error(err.Error())
 		return "", ErrIncorrectQuery
 	}
 
 	op := strings.ToUpper(p.where[p.cursor : p.cursor+opEndPos])
 	if op != string(AndKeyword) && op != string(OrKeyword) {
-		p.logger.Error(ErrIncorrectQuery.Error())
+		err := fmt.Errorf("%w: '%s' isn't a correct binary operator at where statement at %d position", ErrIncorrectQuery, op, p.cursor)
+		p.logger.Error(err.Error())
 		return "", ErrIncorrectQuery
 	}
 
